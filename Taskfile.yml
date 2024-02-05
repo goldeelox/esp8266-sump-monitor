@@ -1,0 +1,25 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  build:
+    cmds:
+    - pio run -e huzzah
+    deps:
+      - compiledb
+    silent: true
+
+  compiledb:
+    cmds:
+    - pio run -t compiledb
+
+  upload:
+    cmds:
+    - pio run -e huzzah -t upload
+    silent: true
+
+  test:
+    cmds:
+    - pio test -e native -v
+    silent: true
