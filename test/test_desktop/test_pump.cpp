@@ -1,12 +1,21 @@
 #include <Pump.h>
 #include <gtest/gtest.h>
 
+#define TEST_PIN 4
+const char pumpName[] = "test_pump";
+
+TEST(PumpTest, PumpHasName) {
+  char expected[] = "test_pump";
+
+  Pump p(expected, TEST_PIN);
+  EXPECT_EQ(p.name, expected);
+}
 TEST(PumpTest, ActiveForConsecutiveIntervals) {
   int expectedUsageCount = 1;
   int expectedUsageSeconds = 5;
 
   int intervals = 5;
-  Pump p;
+  Pump p(pumpName, TEST_PIN);
   for (int count = 0; count < intervals; count++) {
     p.updateState(1);
   }
@@ -19,7 +28,7 @@ TEST(PumpTest, ActiveForSomeIntervals) {
   int expectedUsageCount = 3;
   int expectedUsageSeconds = 6;
 
-  Pump p;
+  Pump p(pumpName, TEST_PIN);
   p.updateState(1);
   p.updateState(1);
   p.updateState(0);
@@ -40,7 +49,7 @@ TEST(PumpTest, NotActive) {
   int expectedUsageSeconds = 0;
 
   int intervals = 10;
-  Pump p;
+  Pump p(pumpName, TEST_PIN);
   p.updateState(0);
 
   EXPECT_EQ(p.usageCount, expectedUsageCount);

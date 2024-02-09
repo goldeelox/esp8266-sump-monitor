@@ -12,7 +12,7 @@ tasks:
 
   compiledb:
     cmds:
-    - pio run -t compiledb
+    - pio run -t compiledb -e huzzah
 
   upload:
     cmds:
@@ -22,4 +22,9 @@ tasks:
   test:
     cmds:
     - pio test -e native -v
+    silent: true
+
+  monitor:
+    cmds:
+    - pio device monitor
     silent: true
