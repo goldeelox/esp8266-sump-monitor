@@ -6,4 +6,3 @@
 .vscode/ipch
 
 compile_commands.json
-src/wifi_credentials.h
