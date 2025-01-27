@@ -1,11 +1,9 @@
 #define DEBUG
 
-#include "pump.h"
 #include "config.h"
+#include "pump.h"
 #include <Arduino.h>
 #include <MQTT.h>
-#include <cstdint>
-#include <cstdio>
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -17,7 +15,7 @@ MQTTClient mqtt_client;
 WiFiClient wifi_client;
 const char CLIENT_NAME[] = MQTT_CLIENT_NAME;
 const char BROKER_ADDRESS[] = MQTT_BROKER_ADDRESS;
-const char TOPIC_NAMESPACE[] = "test/sump";
+const char TOPIC_NAMESPACE[] = MQTT_TOPIC_NAMESPACE;
 
 // pumps
 Pump pumps[] = {{"primary", 26}, {"secondary", 27}};
@@ -45,27 +43,21 @@ void senseVibration(Pump pumps[], size_t size) {
   }
 };
 
-void output(Pump pumps[], size_t size) {
-  for (uint8_t i = 0; i < size; i++) {
-    char duty_cycle_seconds_topic[64];
-    snprintf(duty_cycle_seconds_topic, sizeof(duty_cycle_seconds_topic),
-             "%s/%s/running_seconds_total", TOPIC_NAMESPACE, pumps[i].name);
+void mqtt_publish(Pump pump) {
+  char topic[64];
+  char payload[16];
 
-    char duty_cycle_count_topic[64];
-    snprintf(duty_cycle_count_topic, sizeof(duty_cycle_count_topic),
-             "%s/%s/running_seconds_count", TOPIC_NAMESPACE, pumps[i].name);
+  // total seconds
+  snprintf(topic, sizeof(topic), "%s/%s/running_seconds_total", TOPIC_NAMESPACE,
+           pump.name);
+  snprintf(payload, sizeof(payload), "%d", pump.dutyCycleSeconds);
+  mqtt_client.publish(topic, payload);
 
-#ifdef DEBUG
-    Serial.printf("name: %s\n pin: %d\n state: %d\n dutyCycleCount: %d\n "
-                  "dutyCycleSeconds: %d\n",
-                  pumps[i].name, pumps[i].pin, pumps[i].currentState,
-                  pumps[i].dutyCycleCount, pumps[i].dutyCycleSeconds);
-#endif
-    mqtt_client.publish(duty_cycle_count_topic,
-                        String(pumps[i].dutyCycleCount));
-    mqtt_client.publish(duty_cycle_seconds_topic,
-                        String(pumps[i].dutyCycleSeconds));
-  }
+  // count
+  snprintf(topic, sizeof(topic), "%s/%s/running_seconds_count", TOPIC_NAMESPACE,
+           pump.name);
+  snprintf(payload, sizeof(payload), "%d", pump.dutyCycleCount);
+  mqtt_client.publish(topic, payload);
 }
 
 void reconnectNetwork() {
@@ -111,5 +103,14 @@ void loop() {
   }
 
   senseVibration(pumps, pumpsSize);
-  output(pumps, pumpsSize);
+
+  for (size_t i = 0; i < pumpsSize; i++) {
+    mqtt_publish(pumps[i]);
+#ifdef DEBUG
+    Serial.printf("name: %s\n pin: %d\n state: %d\n dutyCycleCount: %d\n "
+                  "dutyCycleSeconds: %d\n",
+                  pumps[i].name, pumps[i].pin, pumps[i].currentState,
+                  pumps[i].dutyCycleCount, pumps[i].dutyCycleSeconds);
+#endif
+  }
 }
